@@ -8,8 +8,9 @@ from re import match
 from bs4 import BeautifulSoup
 
 from inscriptis import get_text
-
+import asyncio
 import zendriver
+
 
 from .internal.objects import Response, SearchResult, Theme
 from .internal.selectors import DeepSeekSelectors
@@ -123,14 +124,13 @@ class DeepSeek:
         self.logger.debug("Navigating to the chat page...")
         await self.browser.get("https://chat.deepseek.com/" if not self._chat_id \
             else f"https://chat.deepseek.com/a/chat/s/{self._chat_id}")
-
+        
         if self._attempt_cf_bypass:
             try:
-                self.logger.debug("Verifying the Cloudflare protection...")
+                self.logger.debug(f"Попытка обхода Cloudflar")
                 await self.browser.main_tab.verify_cf()
-            except: # It times out if there was no need to verify
-                pass
-        
+            except Exception as e:
+                self.logger.debug(f"Ошибка: {e}")
         self._initialized = True
         self._is_active = True
         loop = get_event_loop()
@@ -332,7 +332,8 @@ class DeepSeek:
         deepthink: bool = False,
         search: bool = False,
         timeout: int = 60,
-        slow_mode_delay: float = 0.25
+        slow_mode_delay: float = 0.25,
+        attempt_bypass: bool = False
     ) -> Optional[Response]:
         """Sends a message to the DeepSeek chat.
 
@@ -386,6 +387,22 @@ class DeepSeek:
 
         send_button = await self.browser.main_tab.select(self.selectors.interactions.send_button)
         await send_button.click()
+        while True:
+            try:
+                element = await self.browser.find_element(
+                    by="xpath",
+                    value="//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'verify you are human')]"
+                )
+                print("Капча есть!")
+                try:
+                    self.logger.debug(f"Попытка обхода Cloudflare")
+                    await self.browser.main_tab.verify_cf()
+                except Exception as e:
+                    self.logger.debug(f"Ошибка: {e}")
+            except:
+                print("Капчи нет или элемент не найден.")
+                break
+
 
         return await self._get_response(timeout = timeout)
 

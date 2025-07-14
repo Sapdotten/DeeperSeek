@@ -3,6 +3,12 @@ from typing import Optional
 import enum
 
 class Response:
+    text: str
+    chat_id: str | None
+    deepthink_duration: int | None
+    deepthink_content: str | None
+    search_results: list | None
+
     def __init__(
         self,
         text: str,
