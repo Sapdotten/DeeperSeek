@@ -27,7 +27,8 @@ class DeepSeek:
         headless: bool = True,
         verbose: bool = False,
         chrome_args: list = [],
-        attempt_cf_bypass: bool = True
+        attempt_cf_bypass: bool = True,
+        sandbox: bool = True
     ) -> None:
         """Initializes the DeepSeek object.
 
@@ -66,6 +67,7 @@ class DeepSeek:
         self._verbose = verbose
         self._chrome_args = chrome_args
         self._attempt_cf_bypass = attempt_cf_bypass
+        self._sandbox = sandbox
 
         self._deepthink_enabled = False
         self._search_enabled = False
@@ -118,7 +120,8 @@ class DeepSeek:
         # Start the browser
         self.browser = await zendriver.start(
             chrome_args = self._chrome_args,
-            headless = self._headless
+            headless = self._headless,
+            sandbox = self._sandbox
         )
 
         self.logger.debug("Navigating to the chat page...")
@@ -127,7 +130,7 @@ class DeepSeek:
         
         if self._attempt_cf_bypass:
             try:
-                self.logger.debug(f"Попытка обхода Cloudflar")
+                self.logger.debug(f"Попытка обхода Cloudflare")
                 await self.browser.main_tab.verify_cf()
             except Exception as e:
                 self.logger.debug(f"Ошибка: {e}")
